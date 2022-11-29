@@ -4,27 +4,31 @@ const userSchema = new mongoose.Schema({
   firstname: {
     type: String,
     default: null,
+    required: [true, "Firstname is required"],
+    lowercase: true,
+    trim: true,
   },
   lastname: {
     type: String,
     default: null,
+    required: [true, "Lastname is required"],
+    lowercase: true,
+    trim: true,
   },
   email: {
     type: String,
-    default: null,
     unique: true,
+    required: [true, "Email is required"],
+    trim: true,
   },
   password: {
     type: String,
-    default: null,
     unique: true,
-    min: 10,
-    max: 15,
+    required: [true, "Password is required"],
   },
   token: {
     type: String,
   },
 });
 
-const Model = mongoose.model("user", userSchema);
-module.exports = Model;
+module.exports = mongoose.model("user", userSchema);
