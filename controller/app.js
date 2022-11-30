@@ -119,6 +119,8 @@ app.post("/login", async (req, res) => {
           // new Date() and new Date(Date.now()) returns the same date object
 
           expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          // maxAge property can be used instead of expires property
+          // maxAge: 432000000 (milliseconds that represent 5 days from now)
           // httpOnly property ensures that only web server can access the cookie
           httpOnly: true,
         };
