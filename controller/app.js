@@ -6,7 +6,9 @@ const jwt = require("jsonwebtoken");
 const User = require("../model/user");
 const app = express();
 
-// middleware function
+const { SECRET_KEY: secretKey, TOKEN_EXPIRES_IN: expireTime } = process.env;
+
+// middleware functions
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -16,24 +18,24 @@ app.get("/", (req, res) => {
 
 app.post("/register", async (req, res) => {
   try {
-    // getting all the values
+    // getting all the data
     const { firstname, lastname, email, password } = req.body;
 
     // checking if the user has entered all the details or not
     if (!(firstname && lastname && email && password)) {
-      res.status(400).send("Please enter all the details");
+      res.status(401).send("Please enter all the details");
     }
 
-    // checking if the email is in a correct format or not
+    // checking if the email is in correct format or not
     if (!email.endsWith("@gmail.com")) {
-      res.status(400).send("Please enter correct email");
+      res.status(401).send("Please enter correct email");
     }
 
-    // checking if the user is already registered or not
+    // checking if the user is registered or not
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      res.status(400).send("User already has an account");
+      console.log("User already has an account");
     }
 
     // encrypting the password
@@ -55,42 +57,82 @@ app.post("/register", async (req, res) => {
 
     // sign() is used to create a json web token string
     // jwt string will look like xxxxx.yyyyy.zzzzz
-    // (xxxxx => header, yyyyy => payload or data, zzzzz => verified signature )
+    // (xxxxx => header, yyyyy => payload or data, zzzzz => verified signature)
     // Syntax: jwt.sign(payload, secret or private key, options)
 
-    const token = jwt.sign({ id: user._id }, "js1234590", { expiresIn: "15h" });
+    const token = jwt.sign({ id: user._id }, secretKey, {
+      expiresIn: expireTime,
+    });
     user.token = token;
     await user.save();
 
-    user.password = null;
+    user.password = undefined;
     res.status(200).json(user);
   } catch (err) {
     console.log(err);
-    console.log("Error is response object");
+    console.log("Error thrown!");
   }
 });
 
 app.post("/login", async (req, res) => {
   try {
+    // getting all the data
     const { email, password } = req.body;
 
+    // checking if the user has entered all the details or not
     if (!(email && password)) {
-      res.status(400).send("Please enter all the details");
+      res.status(401).send("Please enter all the details");
     }
 
+    // checking if the email is in correct format or not
     if (!email.endsWith("@gmail.com")) {
-      res.status(400).send("Please enter correct email");
+      res.status(401).send("Please enter correct email");
     }
 
+    // checking if the user is registered or not
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      res.status(200).send("User can login");
+      console.log("User account exists in our database");
+
+      // encrypting the password
+      const encryptedPassword = await bcrypt.hash(password, 10);
+
+      // matching the password
+      if (encryptedPassword === existingUser.password) {
+        // sending a token directly to the user
+        res.status(200).json({ token: existingUser.token });
+      }
+
+      // another way to match the password
+      if (await bcrypt.compare(password, existingUser.password)) {
+        // create a token and send it via cookies
+        const token = jwt.sign({ id: existingUser._id, email }, secretKey, {
+          expiresIn: expireTime,
+        });
+
+        // defining options for the cookie
+        const options = {
+          // Date.now() returns the no of milliseconds that have passed since Jan 1, 1970
+          // new Date() returns a date object based on the no of milliseconds
+          // that have passed since Jan 1, 1970
+          // new Date() and new Date(Date.now()) returns the same date object
+
+          expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          // httpOnly property ensures that only web server can access the cookie
+          httpOnly: true,
+        };
+
+        // creating and sending a cookie to the user
+        res
+          .status(200)
+          .cookie("token", token, options)
+          .json({ success: true, message: "User can now login" });
+      }
     }
   } catch (err) {
-    res
-      .status(400)
-      .send("You first have to create an account. Only then you can login.");
+    console.log(err);
+    console.log("Error thrown!");
   }
 });
 
