@@ -1,16 +1,24 @@
 require("../config/database").connect();
 require("dotenv").config({ path: "./.env" });
 const express = require("express");
+const app = express();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+
+// importing models
 const User = require("../model/user");
-const app = express();
+
+// importing custom middlewares
+const auth = require("../middleware/auth");
 
 const { SECRET_KEY: secretKey, TOKEN_EXPIRES_IN: expireTime } = process.env;
 
-// middleware functions
+// use() method is used to load middleware functions
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// cookieParser() loads the cookie data into req object (req.cookies)
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.status(200).send("Authentication system");
@@ -135,6 +143,22 @@ app.post("/login", async (req, res) => {
   } catch (err) {
     console.log(err);
     console.log("Error thrown!");
+  }
+});
+
+app.get("/dashboard", (req, auth, res) => {
+  res.status(200).send("Welcome to dashboard");
+});
+
+app.get("/profile", async (req, auth, res) => {
+  try {
+    const user = await User.findOne(req.user._id);
+
+    if (user) {
+      res.status(200).json({ userData: user });
+    }
+  } catch (err) {
+    res.status(403).send("User doesn't exist");
   }
 });
 
