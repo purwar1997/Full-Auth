@@ -1,5 +1,5 @@
-require("../config/database").connect();
 require("dotenv").config({ path: "./.env" });
+require("../config/database").connect();
 const express = require("express");
 const app = express();
 const bcrypt = require("bcryptjs");
@@ -128,7 +128,7 @@ app.post("/login", async (req, res) => {
 
           expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
           // maxAge property can be used instead of expires property
-          // maxAge: 432000000 (milliseconds that represents 5 days from now)
+          // maxAge: 432000000 (milliseconds that represent 5 days from now)
           // httpOnly property ensures that only web server can access the cookie
           httpOnly: true,
         };

@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 // auth is a middleware function
-// very middleware has access to req, res and next()
+// every middleware has access to req, res and next()
 const auth = (req, res, next) => {
   // cookie data can be accessed via req.cookies property
   const { token } = req.cookies;
