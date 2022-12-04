@@ -15,7 +15,10 @@ const auth = require("../middleware/auth");
 const { SECRET_KEY: secretKey, TOKEN_EXPIRES_IN: expireTime } = process.env;
 
 // use() method is used to load middleware functions
+
+// to handle JSON data
 app.use(express.json());
+// to handle data that comes from URL
 app.use(express.urlencoded({ extended: true }));
 // cookieParser() loads the cookie data into req object (req.cookies)
 app.use(cookieParser());
