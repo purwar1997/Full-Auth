@@ -43,7 +43,7 @@ app.post("/register", async (req, res) => {
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      console.log("User already has an account");
+      res.status(400).send("User already has an account");
     }
 
     // encrypting the password
@@ -104,18 +104,18 @@ app.post("/login", async (req, res) => {
       console.log("User account exists in our database");
 
       // encrypting the password
-      const encryptedPassword = await bcrypt.hash(password, 10);
+      // const encryptedPassword = await bcrypt.hash(password, 10);
 
-      // matching the password
-      if (encryptedPassword === existingUser.password) {
-        // sending a token directly to the user
-        res.status(200).json({ token: existingUser.token });
-      }
+      // // matching the password
+      // if (encryptedPassword === existingUser.password) {
+      //   // sending a token directly to the user
+      //   res.status(200).json({ token: existingUser.token });
+      // }
 
       // another way to match the password
       if (await bcrypt.compare(password, existingUser.password)) {
         // create a token and send it via cookies
-        const token = jwt.sign({ id: existingUser._id, email }, secretKey, {
+        const token = jwt.sign({ id: existingUser._id }, secretKey, {
           expiresIn: expireTime,
         });
 
@@ -124,7 +124,7 @@ app.post("/login", async (req, res) => {
           // Date.now() returns the no of milliseconds that have passed since Jan 1, 1970
           // new Date() returns a date object based on the no of milliseconds
           // that have passed since Jan 1, 1970
-          // new Date() and new Date(Date.now()) returns the same date object
+          // new Date() and new Date(Date.now()) returns the same date object i.e. current date
 
           expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
           // maxAge property can be used instead of expires property
@@ -138,7 +138,13 @@ app.post("/login", async (req, res) => {
           .status(200)
           .cookie("token", token, options)
           .json({ success: true, message: "User can now login" });
+      } else {
+        res.status(401).send("Please enter correct password");
       }
+    } else {
+      res
+        .status(400)
+        .send("User first has to register. Only then he can login.");
     }
   } catch (err) {
     console.log(err);
@@ -146,11 +152,11 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/dashboard", (req, auth, res) => {
+app.get("/dashboard", auth, (req, res) => {
   res.status(200).send("Welcome to dashboard");
 });
 
-app.get("/profile", async (req, auth, res) => {
+app.get("/profile", auth, async (req, res) => {
   try {
     const user = await User.findOne(req.user._id);
 

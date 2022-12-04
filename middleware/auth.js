@@ -1,10 +1,16 @@
 const jwt = require("jsonwebtoken");
+const { SECRET_KEY: secretKey } = process.env;
 
 // auth is a middleware function
 // every middleware has access to req, res and next()
 const auth = (req, res, next) => {
   // cookie data can be accessed via req.cookies property
   const { token } = req.cookies;
+
+  // accessing bearer token from the req header
+  // inside request header, bearer token will be in the form of key-value pair
+  // Authorization: bearer sdfsedffue099877788_+uhjw783621s
+  // const token = req.header("Authorization").replace("bearer ", "");
 
   // checking if the token exists or not
   if (!token) {
